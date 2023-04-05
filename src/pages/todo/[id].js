@@ -1,31 +1,52 @@
 // pages/todo/[id].js
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-
-// Mock data
-const todos = [
-  { id: 1, title: 'Buy groceries', done: false },
-  { id: 2, title: 'Clean the house', done: false },
-  { id: 3, title: 'Finish homework', done: true },
-  { id: 4, title: 'Call mom', done: true },
-];
-const categories = ['Work', 'Home', 'School'];
+import { getTodoById, updateTodo } from '.././api/api-functions';
 
 export default function TodoItem() {
   const router = useRouter();
   const { id } = router.query;
-  const todo = todos.find((todo) => todo.id === parseInt(id));
+  const [todo, setTodo] = useState(null);
 
-  const [updatedTodo, setUpdatedTodo] = useState(todo ? todo.title : '');
-  const [selectedCategory, setSelectedCategory] = useState(
-    todo ? todo.category : ''
-  );
-  const [isDone, setIsDone] = useState(todo ? todo.done : false);
+  useEffect(() => {
+    async function fetchTodo() {
+      if (id) {
+        const fetchedTodo = await getTodoById(id);
+        setTodo(fetchedTodo);
+      }
+    }
+    fetchTodo();
+  }, [id]);
 
-  const handleSave = () => {
-    // Implement save functionality to update the to-do item
-    // Redirect to /todos after saving
+  const [updatedTodo, setUpdatedTodo] = useState('');
+  const [updatedContent, setUpdatedContent] = useState('');
+  const [updatedCategory, setUpdatedCategory] = useState('');
+  const [isDone, setIsDone] = useState(false);
+
+  useEffect(() => {
+    if (todo) {
+      setUpdatedTodo(todo.title);
+      setIsDone(todo.done);
+      if (todo.category == null) {
+        setUpdatedCategory('');
+      } else {
+        setUpdatedCategory(todo.category);
+      }
+      setUpdatedContent(todo.content);
+    }
+  }, [todo]);
+
+  const handleSave = async () => {
+    if (todo) {
+      await updateTodo(
+        id,
+        updatedTodo,
+        updatedCategory,
+        updatedContent,
+        isDone
+      );
+    }
     router.push('/todos');
   };
 
@@ -40,28 +61,21 @@ export default function TodoItem() {
   return (
     <div>
       <h1>Edit To-Do Item</h1>
+      <h2>Title</h2>
       <textarea
         value={updatedTodo}
         onChange={(e) => setUpdatedTodo(e.target.value)}
       />
-      <br />
-      <label>
-        Category:
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </label>
-      <br />
-      <button onClick={handleSave} className='btn btn-primary m-3'>
-        Save
-      </button>
+      <h2>Content</h2>
+      <textarea
+        value={updatedContent}
+        onChange={(e) => setUpdatedContent(e.target.value)}
+      />
+      <h2>Category</h2>
+      <textarea
+        value={updatedCategory}
+        onChange={(e) => setUpdatedCategory(e.target.value)}
+      />
       <br />
       <input
         type='checkbox'
@@ -70,9 +84,11 @@ export default function TodoItem() {
       />{' '}
       Mark as done
       <br />
-      <Link href='/todos' style={{ textDecoration: 'none', color: 'inherit' }}>
-        Back to To-Do List
-      </Link>
+      <button onClick={handleSave} className='btn btn-primary m-3'>
+        Save
+      </button>
+      <br />
+      <Link href='/todos'>Back to To-Do List</Link>
     </div>
   );
 }
