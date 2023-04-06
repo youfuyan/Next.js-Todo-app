@@ -1,0 +1,35 @@
+.sideMenu {
+  position: fixed;
+  top: 56px; /* height of the Navbar */
+  left: 0;
+  width: 250px;
+  height: calc(100% - 56px);
+  overflow-y: auto;
+  transition: transform 0.3s ease-in-out; /* Add transition for transform */
+  background-color: #afb7be;
+}
+
+.sideMenuOpen {
+  transform: translateX(0); /* Show the menu */
+  visibility: visible;
+}
+
+.sideMenuClose {
+  transform: translateX(-250px); /* Hide the menu */
+  visibility: hidden;
+}
+
+.mainContent {
+  margin-top: 56px; /* height of the Navbar */
+  transition: margin-left 0.3s ease-in-out;
+  flex: 1; /* Added to fill the remaining width */
+}
+
+.mainContentOpen {
+  margin-left: 250px;
+}
+
+/* Added styles for the container */
+.contentContainer {
+  overflow-x: hidden;
+}

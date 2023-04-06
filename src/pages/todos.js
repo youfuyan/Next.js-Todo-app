@@ -7,7 +7,18 @@ import {
   updateTodo,
   deleteTodo,
 } from './api/api-functions';
-import { Collapse, Button } from 'react-bootstrap';
+import {
+  Collapse,
+  Button,
+  Navbar,
+  Container,
+  ListGroup,
+  Form,
+  InputGroup,
+  Badge,
+} from 'react-bootstrap';
+import { BsList } from 'react-icons/bs'; // Hamburger menu icon
+
 // Mock data
 // const initialTodos = [
 //   { id: 1, title: 'Buy groceries', category: 'Home', done: false },
@@ -112,138 +123,151 @@ export default function Todos() {
   const filterTodosByCategory = (category) => {
     return todos.filter((todo) => todo.category === category && !todo.done);
   };
+
   return (
     <div>
-      <h1>To-Do List</h1>
       {/* Top bar with toggle button */}
-      <div className='d-flex justify-content-between align-items-center bg-light p-2'>
-        <div className='font-weight-bold'>To-Do List</div>
-        <Button
-          variant='outline-primary'
+
+      <Navbar
+        expand={false}
+        variant='dark'
+        style={{ backgroundColor: '#dc4c3e' }}
+      >
+        <Navbar.Toggle
+          aria-controls='category-section'
           onClick={() => setShowLeftMenu(!showLeftMenu)}
         >
-          {showLeftMenu ? 'Hide Categories' : 'Show Categories'}
-        </Button>
-      </div>
+          <BsList />
+        </Navbar.Toggle>
+        <Navbar.Brand>To-Do List</Navbar.Brand>
+      </Navbar>
+      {/* Container to wrap side menu and main content */}
+      <div className='contentContainer' style={{ display: 'flex' }}>
+        {/* Category section */}
+        <Collapse in={showLeftMenu}>
+          <div
+            id='category-section'
+            className={`sideMenu ${
+              showLeftMenu ? 'sideMenuOpen' : 'sideMenuClose'
+            }`}
+          >
+            <h2 className='p-3'>Categories</h2>
+            <input
+              type='text'
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder='New category'
+            />
+            <button onClick={handleAddCategory} className='btn btn-primary m-3'>
+              Add Category
+            </button>
 
-      {/* Category section */}
-      <Collapse in={showLeftMenu}>
-        <div className='border-right' style={{ width: '250px', float: 'left' }}>
-          <h2>Categories</h2>
+            <ul>
+              {/* Filter out null categories before mapping */}
+              {categories
+                .filter((cat) => cat)
+                .map((category) => (
+                  <li key={category}>
+                    <h3>
+                      <Link href={`/todos/${category}`}>{category}</Link>{' '}
+                      <button
+                        onClick={() => handleDeleteCategory(category)}
+                        className='btn btn-danger'
+                      >
+                        Delete
+                      </button>
+                    </h3>
+
+                    <ul>
+                      {filterTodosByCategory(category).map((todo) => (
+                        <li key={todo._id}>
+                          <Link href={`/todo/${todo._id}`}>{todo.title}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </Collapse>
+        <div className={`mainContent ${showLeftMenu ? 'mainContentOpen' : ''}`}>
+          {/* To-do section */}
+          <h2 className='p-3'>All To-Do Items</h2>
           <input
             type='text'
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder='New category'
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+            placeholder='New to-do'
           />
-          <button onClick={handleAddCategory} className='btn btn-primary m-3'>
-            Add Category
-          </button>
-
-          <ul>
-            {/* Filter out null categories before mapping */}
+          <input
+            type='text'
+            value={newTodoContent}
+            onChange={(e) => setNewTodoContent(e.target.value)}
+            placeholder='New to-do content'
+          />
+          <select
+            value={newTodoCategory}
+            onChange={(e) => setNewTodoCategory(e.target.value)}
+          >
+            <option value=''>Select category</option>
+            {/* //filter out null categories */}
             {categories
               .filter((cat) => cat)
               .map((category) => (
-                <li key={category}>
-                  <h3>
-                    <Link href={`/todos/${category}`}>{category}</Link>{' '}
-                    {/* The category is guaranteed to be not null here */}
-                    <button
-                      onClick={() => handleDeleteCategory(category)}
-                      className='btn btn-danger'
-                    >
-                      Delete
-                    </button>
-                  </h3>
-                  {/* Filter out to-do items with null category */}
-                  <ul>
-                    {filterTodosByCategory(category).map((todo) => (
-                      <li key={todo._id}>
-                        <Link href={`/todo/${todo._id}`}>{todo.title}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
-          </ul>
-        </div>
-      </Collapse>
+          </select>
 
-      <div style={{ marginLeft: showLeftMenu ? '250px' : '0px' }}>
-        {/* To-do section */}
-        <h2>All To-Do Items</h2>
-        <input
-          type='text'
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          placeholder='New to-do'
-        />
-        <input
-          type='text'
-          value={newTodoContent}
-          onChange={(e) => setNewTodoContent(e.target.value)}
-          placeholder='New to-do content'
-        />
-        <select
-          value={newTodoCategory}
-          onChange={(e) => setNewTodoCategory(e.target.value)}
-        >
-          <option value=''>Select category</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-
-        <button onClick={handleAddTodo} className='btn btn-primary m-3 '>
-          Add To-Do
-        </button>
-        <ul>
-          {todos.map((todo) => (
-            <li
-              key={todo._id}
-              className='list-group-item d-flex justify-content-between align-items-center'
-            >
-              <div>
-                <Link href={`/todo/${todo._id}`}>
-                  <strong>{todo.title}</strong>
-                </Link>
-                <div
-                  style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '300px',
-                  }}
-                >
-                  {todo.content}
+          <button onClick={handleAddTodo} className='btn btn-primary m-3 '>
+            Add To-Do
+          </button>
+          <ul>
+            {todos.map((todo) => (
+              <li
+                key={todo._id}
+                className='list-group-item d-flex justify-content-between align-items-center'
+              >
+                <div>
+                  <Link href={`/todo/${todo._id}`}>
+                    <strong>{todo.title}</strong>
+                  </Link>
+                  <div
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '300px',
+                    }}
+                  >
+                    {todo.content}
+                  </div>
                 </div>
-              </div>
-              <div>
-                {todo.done && <span className='ml-2'>Done</span>}
+                <div>
+                  {todo.done && <span className='ml-2'>Done</span>}
 
-                <button
-                  onClick={() => handleUpdateTodo(todo._id, !todo.done)}
-                  className={`btn ${
-                    todo.done ? 'btn-secondary' : 'btn-success'
-                  } m-2`}
-                >
-                  {todo.done ? 'Mark as Undone' : 'Mark as Done'}
-                </button>
+                  <button
+                    onClick={() => handleUpdateTodo(todo._id, !todo.done)}
+                    className={`btn ${
+                      todo.done ? 'btn-secondary' : 'btn-success'
+                    } m-2`}
+                  >
+                    {todo.done ? 'Mark as Undone' : 'Mark as Done'}
+                  </button>
 
-                <button
-                  onClick={() => handleDeleteTodo(todo._id)}
-                  className='btn btn-danger m-2'
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <Link href='/done'>View Done Items</Link>
+                  <button
+                    onClick={() => handleDeleteTodo(todo._id)}
+                    className='btn btn-danger m-2'
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Link href='/done'>View Done Items</Link>
+        </div>
       </div>
     </div>
   );
