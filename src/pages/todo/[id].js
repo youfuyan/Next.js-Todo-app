@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getTodoById, updateTodo } from '.././api/api-functions';
-import { useAuth, openSignIn } from '@clerk/nextjs';
+import { useAuth, SignInButton } from '@clerk/nextjs';
 import {
   Form,
   Button,
@@ -150,9 +150,9 @@ export default function TodoItem() {
         <div className='text-center mt-5'>
           <Alert variant='info'>
             Please log in to access your Todo List.
-            <Button onClick={openSignIn} className='ml-3'>
-              Log in
-            </Button>
+            <SignInButton mode='modal'>
+              <Button className='btn'>Sign in</Button>
+            </SignInButton>
           </Alert>
         </div>
       )}

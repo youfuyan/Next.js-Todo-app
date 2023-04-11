@@ -19,7 +19,7 @@ import {
   Badge,
 } from 'react-bootstrap';
 import { BsList } from 'react-icons/bs'; // Hamburger menu icon
-import { useAuth, openSignIn } from '@clerk/nextjs';
+import { useAuth, SignInButton, UserButton } from '@clerk/nextjs';
 
 export default function Todos() {
   const [todos, setTodos] = useState([]);
@@ -77,6 +77,7 @@ export default function Todos() {
       console.error(
         'Title, content, and category are required to create a new todo.'
       );
+      alert('Title, content, and category are required to create a new todo.');
     }
   };
 
@@ -138,6 +139,11 @@ export default function Todos() {
     return todos.filter((todo) => todo.category === category && !todo.done);
   };
 
+  // Define a function to handle navigation to the "done" page
+  const handleViewDone = (category) => {
+    router.push(`/done/${category}`);
+  };
+
   // Filter out the todos that are marked as done
   const pendingTodos = todos.filter((todo) => !todo.done);
 
@@ -159,6 +165,7 @@ export default function Todos() {
               <BsList />
             </Navbar.Toggle>
             <Navbar.Brand>To-Do List</Navbar.Brand>
+            <UserButton className='ml-auto' />
           </Navbar>
           {/* Container to wrap side menu and main content */}
           <div className='contentContainer' style={{ display: 'flex' }}>
@@ -192,33 +199,39 @@ export default function Todos() {
                   {categories
                     .filter((cat) => cat)
                     .map((category) => (
-                      <ListGroup.Item
-                        key={category}
-                        className='d-flex justify-content-between'
-                      >
-                        <div className='d-flex justify-content-between align-items-center'>
-                          <Link href={`/todos/${category}`}>{category}</Link>
-                          <Button
-                            onClick={() => handleDeleteCategory(category)}
-                            variant='danger'
-                          >
-                            Delete
-                          </Button>
+                      <ListGroup.Item key={category}>
+                        <div className='d-flex flex-column'>
+                          {/* Category title and delete button */}
+                          <div className='d-flex justify-content-between align-items-center mb-3'>
+                            <Link href={`/todos/${category}`}>{category}</Link>
+                            <Button
+                              onClick={() => handleViewDone(category)} // Use the handleViewDone function for navigation
+                              variant='primary'
+                            >
+                              View Done
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteCategory(category)}
+                              variant='danger'
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                          {/* Show todo items based on category */}
+                          <ListGroup>
+                            {pendingTodos
+                              .filter((todo) => todo.category === category)
+                              .map((todo) => (
+                                <ListGroup.Item key={todo._id}>
+                                  <Link href={`/todo/${todo._id}`}>
+                                    {todo.title}
+                                  </Link>
+                                </ListGroup.Item>
+                              ))}
+                          </ListGroup>
                         </div>
-                        <ListGroup className='mt-3'>
-                          {todos
-                            .filter((todo) => todo.category === category)
-                            .map((todo) => (
-                              <ListGroup.Item key={todo._id}>
-                                <Link href={`/todo/${todo._id}`}>
-                                  {todo.title}
-                                </Link>
-                              </ListGroup.Item>
-                            ))}
-                        </ListGroup>
                       </ListGroup.Item>
                     ))}
-                  {/* show todo based on category */}
                 </ListGroup>
               </div>
             </Collapse>
@@ -327,7 +340,9 @@ export default function Todos() {
         <Container className='text-center mt-5'>
           {/* Show sign-in button if the user is not signed in */}
           <p>Please log in to access your Todo List.</p>
-          <Button onClick={openSignIn}>Log in</Button>
+          <SignInButton mode='modal'>
+            <Button className='btn'>Sign in</Button>
+          </SignInButton>
         </Container>
       )}
     </div>

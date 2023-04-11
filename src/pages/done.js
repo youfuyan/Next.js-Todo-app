@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth, openSignIn } from '@clerk/nextjs';
+import { useAuth, SignInButton } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import {
   createTodo,
@@ -8,16 +8,7 @@ import {
   updateTodo,
   deleteTodo,
 } from './api/api-functions';
-import {
-  Collapse,
-  Button,
-  Navbar,
-  Container,
-  ListGroup,
-  Form,
-  InputGroup,
-  Badge,
-} from 'react-bootstrap';
+import { Container, ListGroup, Button } from 'react-bootstrap';
 
 export default function Done() {
   const [doneTodos, setDoneTodos] = useState([]);
@@ -72,66 +63,69 @@ export default function Done() {
     <div>
       {/* Check if the user is signed in before rendering the content */}
       {userId ? (
-        <div>
+        <Container className='mt-4'>
           <h1>Done Items</h1>
-          <div className='contentContainer' style={{ display: 'flex' }}>
-            <ul>
-              {doneItems.map((todo) => (
-                <li
-                  key={todo._id}
-                  className='list-group-item d-flex justify-content-between align-items-center'
-                >
-                  <div>
-                    <Link
-                      href={`/todo/${todo._id}`}
-                      style={{ textDecoration: 'line-through' }}
-                    >
-                      <strong>{todo.title}</strong>
-                    </Link>
-                    <div
-                      style={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '300px',
-                      }}
-                    >
-                      {todo.content}
-                    </div>
+          <ListGroup className='mt-4'>
+            {doneItems.map((todo) => (
+              <ListGroup.Item
+                key={todo._id}
+                className='d-flex justify-content-between align-items-center'
+              >
+                <div>
+                  <Link href={`/todo/${todo._id}`}>
+                    <strong style={{ textDecoration: 'line-through' }}>
+                      {todo.title}
+                    </strong>
+                  </Link>
+                  <div
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '300px',
+                    }}
+                  >
+                    {todo.content}
                   </div>
-                  <div>
-                    {doneTodos.done && <span className='ml-2'>Done</span>}
+                </div>
+                <div>
+                  {doneTodos.done && (
+                    <span className='ml-2 badge badge-success'>Done</span>
+                  )}
 
-                    <button
-                      onClick={() => handleUpdateTodo(todo._id, !todo.done)}
-                      className={`btn ${
-                        todo.done ? 'btn-secondary' : 'btn-success'
-                      } m-2`}
-                    >
-                      {todo.done ? 'Mark as Undone' : 'Mark as Done'}
-                    </button>
+                  <Button
+                    onClick={() => handleUpdateTodo(todo._id, !todo.done)}
+                    className={`btn ${
+                      todo.done ? 'btn-secondary' : 'btn-success'
+                    } m-2`}
+                  >
+                    {todo.done ? 'Mark as Undone' : 'Mark as Done'}
+                  </Button>
 
-                    <button
-                      onClick={() => handleDeleteTodo(todo._id)}
-                      className='btn btn-danger m-2'
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  <Button
+                    onClick={() => handleDeleteTodo(todo._id)}
+                    className='btn btn-danger m-2'
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+          <div className='mt-3'>
+            <Link href='/todos'>
+              <Button variant='primary'>Back to To-Do List</Button>
+            </Link>
           </div>
-          <div className='contentContainer'>
-            <Link href='/todos'>Back to To-Do List</Link>
-          </div>
-        </div>
+        </Container>
       ) : (
-        <div>
+        <Container className='text-center mt-5'>
           {/* Show sign-in button if the user is not signed in */}
           <p>Please log in to access your Todo List.</p>
-          <Button onClick={openSignIn}>Log in</Button>
-        </div>
+          <SignInButton mode='modal'>
+            <Button className='btn'>Sign in</Button>
+          </SignInButton>
+        </Container>
       )}
     </div>
   );

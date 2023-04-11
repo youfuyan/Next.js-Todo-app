@@ -17,7 +17,7 @@ import {
   FormControl,
   Badge,
 } from 'react-bootstrap';
-import { useAuth, openSignIn } from '@clerk/nextjs';
+import { useAuth, SignInButton } from '@clerk/nextjs';
 
 export default function TodosByCategory() {
   const [todos, setTodos] = useState([]);
@@ -87,6 +87,8 @@ export default function TodosByCategory() {
       );
     }
   };
+  // Filter out the todos that are marked as done
+  const pendingTodos = todos.filter((todo) => !todo.done);
 
   return (
     <Container className='my-4'>
@@ -121,7 +123,7 @@ export default function TodosByCategory() {
             </Card.Body>
           </Card>
           <ListGroup variant='flush'>
-            {todos.map((todo) => (
+            {pendingTodos.map((todo) => (
               <ListGroup.Item key={todo._id}>
                 <div className='d-flex justify-content-between align-items-center'>
                   <div>
@@ -163,7 +165,9 @@ export default function TodosByCategory() {
         <Container className='text-center mt-5'>
           {/* Show sign-in button if the user is not signed in */}
           <p>Please log in to access your Todo List.</p>
-          <Button onClick={openSignIn}>Log in</Button>
+          <SignInButton mode='modal'>
+            <Button className='btn'>Sign in</Button>
+          </SignInButton>
         </Container>
       )}
     </Container>
