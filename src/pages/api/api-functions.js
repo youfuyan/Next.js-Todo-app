@@ -1,17 +1,17 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
-async function createTodo(title, category, content) {
-  const fakeUserID = '123456789'; // Fake user ID, replace it later with the real user ID
+async function createTodo(token, userId, title, category, content) {
   try {
     const response = await fetch(`${API_BASE}/todos`, {
       method: 'POST',
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json', // Ensure the Content-Type header is set
+        Authorization: `Bearer ${token}`, // Add the JWT token to the request header
       },
       body: JSON.stringify({
-        userId: fakeUserID,
+        userId: userId,
         title,
         category,
         content,
@@ -34,44 +34,42 @@ async function createTodo(title, category, content) {
   }
 }
 
-async function getAllTodos() {
-  const response = await fetch(`${API_BASE}/todos`, {
+async function getAllTodos(token, userId) {
+  const response = await fetch(`${API_BASE}/todos?userId=${userId}`, {
     headers: {
       'x-api-key': API_KEY,
+      Authorization: `Bearer ${token}`, // Add the JWT token to the request header
     },
   });
   return await response.json();
 }
 
-async function getTodoById(id) {
+async function getTodoById(token, id) {
   const response = await fetch(`${API_BASE}/todos/${id}`, {
     headers: {
       'x-api-key': API_KEY,
+      Authorization: `Bearer ${token}`, // Add the JWT token to the request header
     },
   });
   return await response.json();
 }
 
-async function updateTodo(id, title, category, content, done) {
+async function updateTodo(token, userId, id, title, category, content, done) {
   try {
     // Check if the 'id' parameter is defined
     if (!id) {
       throw new Error('Todo ID is required for updating');
     }
-
-    const fakeUserID = '123456789'; // Fake user ID, replace it later with the real user ID
-
-    // Get the user's userId from their JWT token (assuming you have a JWT middleware to decode the token)
-    const userId = fakeUserID;
     const createdOn = new Date().toISOString(); // Get the current date and time
     const response = await fetch(`${API_BASE}/todos/${id}`, {
       method: 'PUT',
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // Add the JWT token to the request header
       },
       body: JSON.stringify({
-        userId: fakeUserID,
+        userId: userId,
         title: title,
         category: category,
         content: content,
@@ -101,7 +99,7 @@ async function updateTodo(id, title, category, content, done) {
   }
 }
 
-async function deleteTodo(id) {
+async function deleteTodo(token, id) {
   try {
     // Check if the 'id' parameter is defined
     if (!id) {
@@ -111,6 +109,7 @@ async function deleteTodo(id) {
       method: 'DELETE',
       headers: {
         'x-api-key': API_KEY,
+        Authorization: `Bearer ${token}`, // Add the JWT token to the request header
       },
     });
 
@@ -128,13 +127,14 @@ async function deleteTodo(id) {
   }
 }
 
-async function markTodoAsDone(id) {
+async function markTodoAsDone(token, id) {
   try {
     const response = await fetch(`${API_BASE}/todos/${id}`, {
       method: 'PUT',
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // Add the JWT token to the request header
       },
       body: JSON.stringify({ done: true }),
     });
@@ -152,14 +152,18 @@ async function markTodoAsDone(id) {
   }
 }
 
-async function getTodosByCategory(category) {
+async function getTodosByCategory(token, userId, category) {
   try {
-    const response = await fetch(`${API_BASE}/todos?category=${category}`, {
-      method: 'GET',
-      headers: {
-        'x-api-key': API_KEY,
-      },
-    });
+    const response = await fetch(
+      `${API_BASE}/todos?userId=${userId}&category=${category}`,
+      {
+        method: 'GET',
+        headers: {
+          'x-api-key': API_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();

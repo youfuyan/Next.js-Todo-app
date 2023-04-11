@@ -7,6 +7,17 @@ import {
   updateTodo,
   deleteTodo,
 } from '.././api/api-functions';
+import {
+  Container,
+  Card,
+  ListGroup,
+  Form,
+  InputGroup,
+  Button,
+  FormControl,
+  Badge,
+} from 'react-bootstrap';
+import { useAuth, openSignIn } from '@clerk/nextjs';
 
 export default function TodosByCategory() {
   const [todos, setTodos] = useState([]);
@@ -15,21 +26,32 @@ export default function TodosByCategory() {
 
   const router = useRouter();
   const { category } = router.query;
+  const { isLoaded, userId, sessionId, getToken } = useAuth();
+  const [jwt, setJwt] = useState('');
+
+  // Redirect to home page if user is not signed in
+  useEffect(() => {
+    if (!isLoaded && !userId) {
+      router.push('/');
+    }
+  }, [userId, isLoaded, router]);
 
   useEffect(() => {
     async function fetchTodos() {
-      if (category) {
-        const fetchedTodos = await getTodosByCategory(category);
+      if (userId && category) {
+        const fetchedTodos = await getTodosByCategory(jwt, userId, category);
         setTodos(fetchedTodos);
       }
     }
     fetchTodos();
-  }, [category]);
+  }, [userId, jwt, category]);
 
   const handleAddTodo = async () => {
     // Ensure that the newTodo, newTodoContent, and newTodoCategory are not empty or undefined.
     if (newTodo && newTodo.trim() && newTodoContent) {
       const createdTodo = await createTodo(
+        jwt,
+        userId,
         newTodo.trim(),
         category,
         newTodoContent
@@ -44,7 +66,7 @@ export default function TodosByCategory() {
   };
   const handleDeleteTodo = async (_id) => {
     console.log('Deleting todo with id:', _id); // Add this line to log the id value
-    await deleteTodo(_id);
+    await deleteTodo(jwt, _id);
     setTodos((prevTodos) => prevTodos.filter((todo) => todo._id !== _id));
   };
 
@@ -52,6 +74,8 @@ export default function TodosByCategory() {
     const todoToUpdate = todos.find((todo) => todo._id === _id);
     if (todoToUpdate) {
       const updatedTodo = await updateTodo(
+        jwt,
+        userId,
         _id,
         todoToUpdate.title,
         todoToUpdate.category,
@@ -65,71 +89,83 @@ export default function TodosByCategory() {
   };
 
   return (
-    <div>
-      <h1>{category} To-Do List Items</h1>
-      <h2 className='mt-5'>Add a new to-do item</h2>
-      <h3 className='mt-3'>Title</h3>
-      <input
-        type='text'
-        value={newTodo}
-        onChange={(e) => setNewTodo(e.target.value)}
-        placeholder='New to-do'
-      />
-      <h3 className='mt-3'>Content</h3>
-      <textarea
-        value={newTodoContent}
-        onChange={(e) => setNewTodoContent(e.target.value)}
-        placeholder='New to-do content'
-      />
-      <br />
-
-      <button onClick={handleAddTodo} className='btn btn-primary m-3'>
-        Add To-Do
-      </button>
-      <ul>
-        {todos.map((todo) => (
-          <li
-            key={todo._id}
-            className='list-group-item d-flex justify-content-between align-items-center'
-          >
-            <div>
-              <Link href={`/todo/${todo._id}`}>
-                <strong>{todo.title}</strong>
-              </Link>
-              <div
-                style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '300px',
-                }}
-              >
-                {todo.content}
-              </div>
-            </div>
-            <div>
-              {todo.done && <span className='ml-2'>Done</span>}
-
-              <button
-                onClick={() => handleUpdateTodo(todo._id, !todo.done)}
-                className={`btn ${
-                  todo.done ? 'btn-secondary' : 'btn-success'
-                } m-2`}
-              >
-                {todo.done ? 'Mark as Undone' : 'Mark as Done'}
-              </button>
-
-              <button
-                onClick={() => handleDeleteTodo(todo._id)}
-                className='btn btn-danger m-2'
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <Link href='/todos'>View All To-Do Items</Link>
-    </div>
+    <Container className='my-4'>
+      {/* Check if the user is signed in before rendering the content */}
+      {userId ? (
+        <div>
+          <h1 className='mb-4'>{category} To-Do List Items</h1>
+          <Card className='mb-4'>
+            <Card.Header>Add a new to-do item</Card.Header>
+            <Card.Body>
+              <Form.Group className='mb-3'>
+                <Form.Label>Title</Form.Label>
+                <Form.Control
+                  type='text'
+                  value={newTodo}
+                  onChange={(e) => setNewTodo(e.target.value)}
+                  placeholder='New to-do'
+                />
+              </Form.Group>
+              <Form.Group className='mb-3'>
+                <Form.Label>Content</Form.Label>
+                <Form.Control
+                  as='textarea'
+                  value={newTodoContent}
+                  onChange={(e) => setNewTodoContent(e.target.value)}
+                  placeholder='New to-do content'
+                />
+              </Form.Group>
+              <Button onClick={handleAddTodo} className='btn btn-primary'>
+                Add To-Do
+              </Button>
+            </Card.Body>
+          </Card>
+          <ListGroup variant='flush'>
+            {todos.map((todo) => (
+              <ListGroup.Item key={todo._id}>
+                <div className='d-flex justify-content-between align-items-center'>
+                  <div>
+                    <Link href={`/todo/${todo._id}`}>
+                      <strong>{todo.title}</strong>
+                    </Link>
+                    <div>{todo.content}</div>
+                  </div>
+                  <div>
+                    {todo.done && (
+                      <Badge className='ml-2' bg='success'>
+                        Done
+                      </Badge>
+                    )}
+                    <Button
+                      onClick={() => handleUpdateTodo(todo._id, !todo.done)}
+                      variant={todo.done ? 'secondary' : 'success'}
+                      className='m-2'
+                    >
+                      {todo.done ? 'Mark as Undone' : 'Mark as Done'}
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteTodo(todo._id)}
+                      variant='danger'
+                      className='m-2'
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+          <Link href='/todos'>
+            <Button className='mt-3'>View All To-Do Items</Button>
+          </Link>
+        </div>
+      ) : (
+        <Container className='text-center mt-5'>
+          {/* Show sign-in button if the user is not signed in */}
+          <p>Please log in to access your Todo List.</p>
+          <Button onClick={openSignIn}>Log in</Button>
+        </Container>
+      )}
+    </Container>
   );
 }

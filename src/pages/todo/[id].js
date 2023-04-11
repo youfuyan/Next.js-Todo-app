@@ -3,21 +3,42 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getTodoById, updateTodo } from '.././api/api-functions';
+import { useAuth, openSignIn } from '@clerk/nextjs';
+import {
+  Form,
+  Button,
+  Card,
+  Container,
+  Col,
+  Row,
+  Alert,
+} from 'react-bootstrap';
 
 export default function TodoItem() {
   const router = useRouter();
   const { id } = router.query;
   const [todo, setTodo] = useState(null);
+  const { isLoaded, userId, sessionId, getToken } = useAuth();
+  const [jwt, setJwt] = useState('');
+  // Redirect to home page if user is not signed in
+  useEffect(() => {
+    if (!isLoaded && !userId) {
+      router.push('/');
+    }
+  }, [userId, isLoaded, router]);
 
   useEffect(() => {
     async function fetchTodo() {
-      if (id) {
-        const fetchedTodo = await getTodoById(id);
+      if (userId && id) {
+        const token = await getToken({ template: 'codehooks' });
+        setJwt(token);
+        const fetchedTodo = await getTodoById(jwt, id);
+        console.log('Fetched todos:', fetchedTodo);
         setTodo(fetchedTodo);
       }
     }
     fetchTodo();
-  }, [id]);
+  }, [userId, jwt, id]);
 
   const [updatedTodo, setUpdatedTodo] = useState('');
   const [updatedContent, setUpdatedContent] = useState('');
@@ -40,6 +61,8 @@ export default function TodoItem() {
   const handleSave = async () => {
     if (todo) {
       await updateTodo(
+        jwt,
+        userId,
         id,
         updatedTodo,
         updatedCategory,
@@ -57,38 +80,82 @@ export default function TodoItem() {
   if (!todo) {
     return <div>Loading...</div>;
   }
-
   return (
     <div>
-      <h1>Edit To-Do Item</h1>
-      <h2>Title</h2>
-      <textarea
-        value={updatedTodo}
-        onChange={(e) => setUpdatedTodo(e.target.value)}
-      />
-      <h2>Content</h2>
-      <textarea
-        value={updatedContent}
-        onChange={(e) => setUpdatedContent(e.target.value)}
-      />
-      <h2>Category</h2>
-      <textarea
-        value={updatedCategory}
-        onChange={(e) => setUpdatedCategory(e.target.value)}
-      />
-      <br />
-      <input
-        type='checkbox'
-        checked={isDone}
-        onChange={handleToggleDone}
-      />{' '}
-      Mark as done
-      <br />
-      <button onClick={handleSave} className='btn btn-primary m-3'>
-        Save
-      </button>
-      <br />
-      <Link href='/todos'>Back to To-Do List</Link>
+      {/* Check if the user is signed in before rendering the content */}
+      {userId ? (
+        <Container>
+          <Row className='justify-content-md-center'>
+            <Col md='auto'>
+              <Card className='mt-5'>
+                <Card.Header className='bg-primary text-white text-center'>
+                  Edit To-Do Item
+                </Card.Header>
+                <Card.Body>
+                  {!todo ? (
+                    <Alert variant='info'>Loading...</Alert>
+                  ) : (
+                    <Form>
+                      <Form.Group controlId='todoTitle'>
+                        <Form.Label>Title</Form.Label>
+                        <Form.Control
+                          as='textarea'
+                          rows={1}
+                          value={updatedTodo}
+                          onChange={(e) => setUpdatedTodo(e.target.value)}
+                        />
+                      </Form.Group>
+                      <Form.Group controlId='todoContent'>
+                        <Form.Label>Content</Form.Label>
+                        <Form.Control
+                          as='textarea'
+                          rows={3}
+                          value={updatedContent}
+                          onChange={(e) => setUpdatedContent(e.target.value)}
+                        />
+                      </Form.Group>
+                      <Form.Group controlId='todoCategory'>
+                        <Form.Label>Category</Form.Label>
+                        <Form.Control
+                          as='textarea'
+                          rows={1}
+                          value={updatedCategory}
+                          onChange={(e) => setUpdatedCategory(e.target.value)}
+                        />
+                      </Form.Group>
+                      <Form.Group controlId='todoDone' className='mb-3'>
+                        <Form.Check
+                          type='checkbox'
+                          label='Mark as done'
+                          checked={isDone}
+                          onChange={handleToggleDone}
+                        />
+                      </Form.Group>
+                      <Button onClick={handleSave} className='btn btn-primary'>
+                        Save
+                      </Button>
+                    </Form>
+                  )}
+                </Card.Body>
+              </Card>
+              <div className='text-center mt-3'>
+                <Link href='/todos' className='btn btn-secondary'>
+                  Back to To-Do List
+                </Link>
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      ) : (
+        <div className='text-center mt-5'>
+          <Alert variant='info'>
+            Please log in to access your Todo List.
+            <Button onClick={openSignIn} className='ml-3'>
+              Log in
+            </Button>
+          </Alert>
+        </div>
+      )}
     </div>
   );
 }

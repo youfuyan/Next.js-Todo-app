@@ -33,3 +33,23 @@
 .contentContainer {
   overflow-x: hidden;
 }
+
+/* CSS module for fade-in fade-out animation */
+.fadeInOut {
+  animation: fadeInOut 4s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

@@ -2,12 +2,6 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
-// Mock data
-const doneTodos = [
-  { id: 3, title: 'Finish homework', category: 'School', done: true },
-  { id: 4, title: 'Call mom', category: 'Home', done: true },
-];
-
 export default function DoneByCategory() {
   const router = useRouter();
   const { category } = router.query;
